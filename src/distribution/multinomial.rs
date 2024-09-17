@@ -180,6 +180,50 @@ where
     }
 }
 
+impl<D> Min<u64> for Multinomial<D>
+where
+    D: Dim,
+    nalgebra::DefaultAllocator: nalgebra::allocator::Allocator<f64, D>,
+{
+    /// Returns the minimum value for any category in a
+    /// multinomial distribution
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// 0
+    /// ```
+    ///
+    /// This happens when none of the trials result in the
+    /// particular category
+    fn min(&self) -> u64 {
+        0
+    }
+}
+
+impl<D> Max<u64> for Multinomial<D>
+where
+    D: Dim,
+    nalgebra::DefaultAllocator: nalgebra::allocator::Allocator<f64, D>,
+{
+    /// Returns the maximum value for any category in a
+    /// multinomial distribution
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// n
+    /// ```
+    ///
+    /// where n is the total number of trials.
+    ///
+    /// This happens when all the trials result in the
+    /// particular category
+    fn max(&self) -> u64 {
+        self.n
+    }
+}
+
 impl<D> MeanN<DVector<f64>> for Multinomial<D>
 where
     D: Dim,
@@ -345,6 +389,8 @@ mod tests {
     use nalgebra::{dmatrix, dvector, vector, DimMin, Dyn, OVector};
     use std::fmt::{Debug, Display};
 
+    use super::{Max, Min};
+
     fn try_create<D>(p: OVector<f64, D>, n: u64) -> Multinomial<D>
     where
         D: DimMin<D, Output = D>,
@@ -501,6 +547,15 @@ mod tests {
             1e-15,
             pmf(dvector![1, 1, 1, 7]),
         );
+    }
+
+    #[test]
+    fn test_min_max() {
+        let min = |x: Multinomial<_>| (x.min()) as f64;
+        let max = |x:Multinomial<_>| (x.max()) as f64;
+
+        test_almost(dvector![0.1, 0.3, 0.6], 10, 0.0, 1e-15, min);
+        test_almost(dvector![0.1, 0.3, 0.6], 10, 10.0, 1e-15, max);
     }
 
     #[test]
